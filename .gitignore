@@ -1,0 +1,26 @@
+### Java / Maven
+**/target/
+
+### Logs / temp
+*.log
+logs/
+/tmp/
+
+### OS
+.DS_Store
+Thumbs.db
+
+### IDEs / editors
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+
+### VS Code / Cursor workspace cruft (optional local settings)
+.vscode/
+!.vscode/extensions.json
+
+### Environment / secrets (if ever added locally)
+.env
+.env.*
