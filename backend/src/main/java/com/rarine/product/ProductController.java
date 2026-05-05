@@ -15,6 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.rarine.product.dto.ProductUpdateRequest;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import java.net.URI;
+
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -43,6 +50,47 @@ public class ProductController {
   @GetMapping
   public List<ProductResponse> list() {
     return repository.findAll().stream().map(this::toResponse).toList();
+  }
+
+  @GetMapping("/{id}")
+  public ProductResponse get(@PathVariable Long id) {
+    return repository.findById(id)
+            .map(this::toResponse)
+            .orElseThrow(() -> new NotFoundException("Product not found"));
+  }
+
+  @PutMapping("/{id}")
+  public ProductResponse update(@PathVariable Long id,
+                                @Valid @RequestBody ProductUpdateRequest request) {
+    Product p = repository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Product not found"));
+    p.setName(request.name());
+    p.setType(request.type());
+    p.setModel(request.model());
+    p.setCollar(request.collar());
+    p.setFabric(request.fabric());
+    p.setBaseColor(request.baseColor());
+    p.setHasEmbroidery(request.hasEmbroidery());
+    p.setHasPrint(request.hasPrint());
+    Product saved = repository.save(p);
+    return toResponse(saved);
+  }
+
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  private static class NotFoundException extends RuntimeException {
+    NotFoundException(String message) {
+      super(message);
+    }
+  }
+
+  @ExceptionHandler(NotFoundException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  ProblemDetail handleNotFound(NotFoundException ex) {
+    ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+    pd.setTitle("Not found");
+    pd.setDetail(ex.getMessage());
+    pd.setType(URI.create("urn:rarine:not-found"));
+    return pd;
   }
 
   private ProductResponse toResponse(Product p) {

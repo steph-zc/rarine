@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.rarine.client.dto.ClientUpdateRequest;
+import org.springframework.web.bind.annotation.PutMapping;
+
 @RestController
 @RequestMapping("/api/clients")
 public class ClientController {
@@ -58,6 +61,20 @@ public class ClientController {
   public ClientResponse inactivate(@PathVariable Long id) {
     Client c = repository.findById(id).orElseThrow(() -> new NotFoundException("Client not found"));
     c.setActive(false);
+    Client saved = repository.save(c);
+    return toResponse(saved);
+  }
+
+  @PutMapping("/{id}")
+  public ClientResponse update(@PathVariable Long id,
+                               @Valid @RequestBody ClientUpdateRequest request) {
+    Client c = repository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Client not found"));
+    c.setType(request.type());
+    c.setName(request.name());
+    c.setDocument(request.document());
+    c.setEmail(request.email());
+    c.setPhone(request.phone());
     Client saved = repository.save(c);
     return toResponse(saved);
   }
