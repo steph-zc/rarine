@@ -1,9 +1,11 @@
-package com.rarine.product;
+package com.rarine.controller;
 
 import java.util.List;
 
-import com.rarine.product.dto.ProductCreateRequest;
-import com.rarine.product.dto.ProductResponse;
+import com.rarine.domain.entity.Product;
+import com.rarine.dto.request.ProductCreateRequest;
+import com.rarine.dto.response.ProductResponse;
+import com.rarine.repository.ProductRepository;
 
 import jakarta.validation.Valid;
 
@@ -15,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.rarine.product.dto.ProductUpdateRequest;
+import com.rarine.dto.request.ProductUpdateRequest;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.http.ProblemDetail;

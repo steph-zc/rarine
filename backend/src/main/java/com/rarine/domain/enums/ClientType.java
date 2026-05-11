@@ -1,4 +1,4 @@
-package com.rarine.client;
+package com.rarine.domain.enums;
 
 public enum ClientType {
   PF,

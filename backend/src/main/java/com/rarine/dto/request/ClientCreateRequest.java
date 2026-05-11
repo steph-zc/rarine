@@ -1,6 +1,5 @@
-package com.rarine.client.dto;
-
-import com.rarine.client.ClientType;
+package com.rarine.dto.request;
+import com.rarine.domain.enums.ClientType;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

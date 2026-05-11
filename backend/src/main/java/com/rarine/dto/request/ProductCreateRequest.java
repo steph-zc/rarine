@@ -1,4 +1,4 @@
-package com.rarine.product.dto;
+package com.rarine.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

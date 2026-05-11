@@ -1,10 +1,13 @@
-package com.rarine.client;
+package com.rarine.controller;
 
 import java.net.URI;
 import java.util.List;
 
-import com.rarine.client.dto.ClientCreateRequest;
-import com.rarine.client.dto.ClientResponse;
+import com.rarine.domain.entity.Client;
+import com.rarine.domain.enums.ClientType;
+import com.rarine.dto.request.ClientCreateRequest;
+import com.rarine.dto.response.ClientResponse;
+import com.rarine.repository.ClientRepository;
 
 import jakarta.validation.Valid;
 
@@ -21,8 +24,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.rarine.client.dto.ClientUpdateRequest;
+import com.rarine.dto.request.ClientUpdateRequest;
 import org.springframework.web.bind.annotation.PutMapping;
+import com.rarine.exception.NotFoundException;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -91,13 +95,6 @@ public class ClientController {
         c.getCreatedAt(),
         c.getUpdatedAt()
     );
-  }
-
-  @ResponseStatus(HttpStatus.NOT_FOUND)
-  private static class NotFoundException extends RuntimeException {
-    NotFoundException(String message) {
-      super(message);
-    }
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)

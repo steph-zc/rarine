@@ -1,8 +1,8 @@
-package com.rarine.client.dto;
+package com.rarine.dto.response;
 
 import java.time.OffsetDateTime;
 
-import com.rarine.client.ClientType;
+import com.rarine.domain.enums.ClientType;
 
 public record ClientResponse(
     Long id,

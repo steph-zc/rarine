@@ -1,4 +1,5 @@
-package com.rarine.client;
+package com.rarine.domain.entity;
+import com.rarine.domain.enums.ClientType;
 
 import java.time.OffsetDateTime;
 

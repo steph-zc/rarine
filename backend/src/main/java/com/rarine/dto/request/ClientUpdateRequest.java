@@ -1,11 +1,11 @@
-package com.rarine.client.dto;
+package com.rarine.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import com.rarine.client.ClientType;
+import com.rarine.domain.enums.ClientType;
 
 public record ClientUpdateRequest(
         @NotNull ClientType type,
