@@ -1,4 +1,4 @@
-package com.rarine.product;
+package com.rarine.domain.entity;
 
 import java.time.OffsetDateTime;
 

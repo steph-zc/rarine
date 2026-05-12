@@ -1,4 +1,4 @@
-package com.rarine.product.dto;
+package com.rarine.dto.response;
 
 import java.time.OffsetDateTime;
 
