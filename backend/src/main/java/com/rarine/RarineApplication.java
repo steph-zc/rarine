@@ -9,4 +9,3 @@ public class RarineApplication {
     SpringApplication.run(RarineApplication.class, args);
   }
 }
-

@@ -24,3 +24,23 @@ Thumbs.db
 ### Environment / secrets (if ever added locally)
 .env
 .env.*
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+backend/uploads/
