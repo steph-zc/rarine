@@ -1,46 +1,74 @@
-### Java / Maven
+# ┌─────────────────────────────────────────┐
+# │  Java / Maven                           │
+# └─────────────────────────────────────────┘
 **/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
 
-### Logs / temp
+# ┌─────────────────────────────────────────┐
+# │  Configurações com credenciais          │
+# └─────────────────────────────────────────┘
+
+# ┌─────────────────────────────────────────┐
+# │  Variáveis de ambiente                  │
+# └─────────────────────────────────────────┘
+.env
+.env.*
+!.env.example
+
+# ┌─────────────────────────────────────────┐
+# │  Frontend — dependências e build        │
+# └─────────────────────────────────────────┘
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# ┌─────────────────────────────────────────┐
+# │  Arquivos enviados por usuários         │
+# └─────────────────────────────────────────┘
+backend/uploads/
+
+# ┌─────────────────────────────────────────┐
+# │  Logs e temporários                     │
+# └─────────────────────────────────────────┘
 *.log
 logs/
 /tmp/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-### OS
-.DS_Store
-Thumbs.db
-
-### IDEs / editors
+# ┌─────────────────────────────────────────┐
+# │  IDEs e editores                        │
+# └─────────────────────────────────────────┘
 .idea/
 *.iml
+*.ipr
+*.iws
 .project
 .classpath
 .settings/
-
-### VS Code / Cursor workspace cruft (optional local settings)
 .vscode/
 !.vscode/extensions.json
+.cursor/
+*.swp
+*.swo
+*~
 
-### Environment / secrets (if ever added locally)
-.env
-.env.*
-
-# Frontend
-frontend/node_modules/
-frontend/dist/
-
-# Variáveis de ambiente
-.env
-.env.local
-.env.*.local
-
-# Editor
-.vscode/
-.idea/
-
-# OS
+# ┌─────────────────────────────────────────┐
+# │  Sistema operacional                    │
+# └─────────────────────────────────────────┘
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
-
-# Uploads
-backend/uploads/
+ehthumbs.db
+desktop.ini

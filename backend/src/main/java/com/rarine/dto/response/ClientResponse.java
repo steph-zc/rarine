@@ -11,8 +11,14 @@ public record ClientResponse(
     String document,
     String email,
     String phone,
+    String city,
+    String school,
+    String childName,
+    String tradeName,
+    String stateRegistration,
+    String responsibleName,
+    String responsiblePhone,
     boolean active,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}
-
