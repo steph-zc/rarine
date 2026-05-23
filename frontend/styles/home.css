@@ -1,0 +1,29 @@
+body{
+    background-color: #f5f5f5;
+}
+
+.home-container{
+    min-height: 100vh;
+}
+
+.menu-card{
+    background-color: #9fc3ea;
+    border-radius: 10px;
+    transition: 0.3s;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.menu-card:hover{
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.menu-card h4{
+    font-size: 22px;
+    margin-top: 10px;
+}
+
+.menu-card i{
+    color: #000;
+}

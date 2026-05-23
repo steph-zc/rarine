@@ -4,6 +4,7 @@ import com.rarine.domain.entity.*;
 import com.rarine.dto.request.ItemEmbroideryCreateRequest;
 import com.rarine.dto.request.OrderCreateRequest;
 import com.rarine.dto.request.OrderItemCreateRequest;
+import com.rarine.dto.request.OrderUpdateRequest;
 import com.rarine.dto.response.*;
 import com.rarine.exception.NotFoundException;
 import com.rarine.repository.*;
@@ -76,6 +77,20 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public OrderResponse get(@PathVariable Long id) {
+        return fetchAndMap(id);
+    }
+
+    @PutMapping("/{id}")
+    public OrderResponse update(@PathVariable Long id,
+                                @Valid @RequestBody OrderUpdateRequest request) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        Client client = clientRepository.findById(request.clientId())
+                .orElseThrow(() -> new NotFoundException("Client not found"));
+        order.setClient(client);
+        order.setDeadline(request.deadline());
+        order.setNotes(request.notes());
+        orderRepository.save(order);
         return fetchAndMap(id);
     }
 

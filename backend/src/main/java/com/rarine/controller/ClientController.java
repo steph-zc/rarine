@@ -6,7 +6,9 @@ import java.util.List;
 import com.rarine.domain.entity.Client;
 import com.rarine.domain.enums.ClientType;
 import com.rarine.dto.request.ClientCreateRequest;
+import com.rarine.dto.request.ClientUpdateRequest;
 import com.rarine.dto.response.ClientResponse;
+import com.rarine.exception.NotFoundException;
 import com.rarine.repository.ClientRepository;
 
 import jakarta.validation.Valid;
@@ -19,14 +21,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.rarine.dto.request.ClientUpdateRequest;
-import org.springframework.web.bind.annotation.PutMapping;
-import com.rarine.exception.NotFoundException;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -41,11 +40,7 @@ public class ClientController {
   @ResponseStatus(HttpStatus.CREATED)
   public ClientResponse create(@Valid @RequestBody ClientCreateRequest request) {
     Client c = new Client();
-    c.setType(request.type());
-    c.setName(request.name());
-    c.setDocument(request.document());
-    c.setEmail(request.email());
-    c.setPhone(request.phone());
+    applyFields(c, request);
     c.setActive(true);
     Client saved = repository.save(c);
     return toResponse(saved);
@@ -74,13 +69,39 @@ public class ClientController {
                                @Valid @RequestBody ClientUpdateRequest request) {
     Client c = repository.findById(id)
             .orElseThrow(() -> new NotFoundException("Client not found"));
+    applyFields(c, request);
+    Client saved = repository.save(c);
+    return toResponse(saved);
+  }
+
+  private void applyFields(Client c, ClientCreateRequest request) {
     c.setType(request.type());
     c.setName(request.name());
     c.setDocument(request.document());
     c.setEmail(request.email());
     c.setPhone(request.phone());
-    Client saved = repository.save(c);
-    return toResponse(saved);
+    c.setCity(request.city());
+    c.setSchool(request.school());
+    c.setChildName(request.childName());
+    c.setTradeName(request.tradeName());
+    c.setStateRegistration(request.stateRegistration());
+    c.setResponsibleName(request.responsibleName());
+    c.setResponsiblePhone(request.responsiblePhone());
+  }
+
+  private void applyFields(Client c, ClientUpdateRequest request) {
+    c.setType(request.type());
+    c.setName(request.name());
+    c.setDocument(request.document());
+    c.setEmail(request.email());
+    c.setPhone(request.phone());
+    c.setCity(request.city());
+    c.setSchool(request.school());
+    c.setChildName(request.childName());
+    c.setTradeName(request.tradeName());
+    c.setStateRegistration(request.stateRegistration());
+    c.setResponsibleName(request.responsibleName());
+    c.setResponsiblePhone(request.responsiblePhone());
   }
 
   private ClientResponse toResponse(Client c) {
@@ -91,6 +112,13 @@ public class ClientController {
         c.getDocument(),
         c.getEmail(),
         c.getPhone(),
+        c.getCity(),
+        c.getSchool(),
+        c.getChildName(),
+        c.getTradeName(),
+        c.getStateRegistration(),
+        c.getResponsibleName(),
+        c.getResponsiblePhone(),
         c.isActive(),
         c.getCreatedAt(),
         c.getUpdatedAt()
@@ -107,4 +135,3 @@ public class ClientController {
     return pd;
   }
 }
-
