@@ -94,6 +94,22 @@ public class OrderController {
         return fetchAndMap(id);
     }
 
+    // ── Alterar Status do Pedido ──────────────────────────────────────────────
+
+    @PatchMapping("/{id}/status")
+    public OrderResponse updateStatus(@PathVariable Long id,
+                                      @RequestParam String status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        try {
+            order.setStatus(com.rarine.domain.enums.OrderStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Status inválido: " + status);
+        }
+        orderRepository.save(order);
+        return fetchAndMap(id);
+    }
+
     // ── Adicionar Item ao Pedido ──────────────────────────────────────────────
 
     @PostMapping("/{orderId}/items")

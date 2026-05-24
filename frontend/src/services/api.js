@@ -44,6 +44,7 @@ export const api = {
     buscar: (id) => request(`/orders/${id}`),
     criar: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
     editar: (id, data) => request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    atualizarStatus: (id, status) => request(`/orders/${id}/status?status=${status}`, { method: 'PATCH' }),
     adicionarItem: (orderId, data) =>
       request(`/orders/${orderId}/items`, { method: 'POST', body: JSON.stringify(data) }),
     adicionarBordado: (orderId, itemId, data) =>

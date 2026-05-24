@@ -103,3 +103,102 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+
+/* ── Alertas de prazo ──────────────────────────────────── */
+.home-alertas {
+  background: #fffbeb;
+  border: 1.5px solid #f59e0b;
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+
+[data-theme="dark"] .home-alertas {
+  background: #1c1607;
+  border-color: #b45309;
+}
+
+.home-alertas-titulo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+[data-theme="dark"] .home-alertas-titulo {
+  color: #fcd34d;
+}
+
+.home-alertas-icone {
+  font-size: 15px;
+}
+
+.home-alerta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 13.5px;
+}
+
+.home-alerta-item:hover {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+[data-theme="dark"] .home-alerta-item:hover {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.home-alerta-item + .home-alerta-item {
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.home-alerta-cliente {
+  font-weight: 700;
+  color: var(--texto);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-alerta-sep {
+  color: #d97706;
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
+.home-alerta-prazo {
+  font-weight: 600;
+  color: #b45309;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .home-alerta-prazo {
+  color: #fcd34d;
+}
+
+.home-alerta-data {
+  color: #78716c;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .home-alerta-data {
+  color: #a8a29e;
+}
+
+.home-alerta-seta {
+  color: #d97706;
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-left: auto;
+}

@@ -12,6 +12,7 @@ const LOCAIS = ['frente', 'costas', 'manga']
 // Gola / Tecido com iniciais maiúsculas
 const GOLAS   = [{ val: 'redonda', label: 'Redonda' }, { val: 'polo', label: 'Polo' }, { val: 'V', label: 'V' }, { val: 'canoa', label: 'Canoa' }]
 const TECIDOS = [{ val: 'algodão', label: 'Algodão' }, { val: 'dry', label: 'Dry' }, { val: 'cross', label: 'Cross' }, { val: 'PV', label: 'PV' }]
+const TAMANHOS = ['P', 'M', 'G', 'GG', 'G1']
 
 function OrdemServico() {
   const { id } = useParams()
@@ -61,6 +62,17 @@ function OrdemServico() {
       carregar()
     } catch (e) { alert('Erro: ' + e.message) }
     finally { setSalvandoInfo(false) }
+  }
+
+  const handleProdutoChange = (produtoId) => {
+    const prod = produtos.find(p => String(p.id) === String(produtoId))
+    setItemForm(f => ({
+      ...f,
+      productId: produtoId,
+      color:  prod?.baseColor || prod?.corBase || '',
+      collar: prod?.collar    || prod?.gola    || '',
+      fabric: prod?.fabric    || prod?.tecido  || '',
+    }))
   }
 
   const adicionarItem = async (e) => {
@@ -116,14 +128,11 @@ function OrdemServico() {
   return (
     <div>
       <Header />
-      <div className="page-title-bar page-title-bar--with-back">
-        <button type="button" className="page-title-back" onClick={() => navigate('/pedidos')}>
-          <i className="bi bi-arrow-left" aria-hidden />
+      <div className="action-bar">
+        <button className="action-bar-btn" onClick={() => navigate('/pedidos')}>
+          <i className="bi bi-arrow-left"></i>
           Voltar
         </button>
-        <span className="page-title-bar-text">
-          OS #{ordem.id} — {ordem.clientName || ordem.clienteNome}
-        </span>
       </div>
 
       <div className="page-content">
@@ -201,7 +210,7 @@ function OrdemServico() {
                     <select
                       className="r-select"
                       value={itemForm.productId}
-                      onChange={e => setItemForm(f => ({ ...f, productId: e.target.value }))}
+                      onChange={e => handleProdutoChange(e.target.value)}
                       required
                     >
                       <option value="">Selecione</option>
@@ -216,7 +225,15 @@ function OrdemServico() {
                     </div>
                     <div>
                       <label className="r-label">Tamanho *</label>
-                      <input className="r-input" value={itemForm.size} onChange={e => setItemForm(f => ({ ...f, size: e.target.value }))} required />
+                      <select
+                        className="r-select"
+                        value={itemForm.size}
+                        onChange={e => setItemForm(f => ({ ...f, size: e.target.value }))}
+                        required
+                      >
+                        <option value="">Selecione</option>
+                        {TAMANHOS.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
                     </div>
                     <div>
                       <label className="r-label">Quantidade *</label>

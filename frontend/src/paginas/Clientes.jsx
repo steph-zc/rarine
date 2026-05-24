@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import { api } from '../services/api'
+import { formatarTelefone } from '../utils/formatacao'
 
 function Clientes() {
   const navigate = useNavigate()
@@ -29,8 +30,6 @@ function Clientes() {
   return (
     <div>
       <Header />
-      <div className="page-title-bar">Clientes</div>
-
       <div className="action-bar">
         <button className="action-bar-btn" onClick={() => navigate('/cadastrar-clientes')}>
           <i className="bi bi-person-plus"></i>
@@ -61,7 +60,7 @@ function Clientes() {
                     <td style={{ color: '#6b7280', fontSize: 12 }}>#{c.id}</td>
                     <td style={{ fontWeight: 600 }}>{c.name}</td>
                     <td>{c.type === 'PF' ? 'Pessoa Física' : c.type === 'PJ' ? 'Pessoa Jurídica' : c.type}</td>
-                    <td>{c.phone || '—'}</td>
+                    <td>{c.phone ? formatarTelefone(c.phone) : '—'}</td>
                     <td>{c.email || '—'}</td>
                     <td>
                       <span className={`badge-status ${c.active ? 'badge-ativo' : 'badge-inativo'}`}>
@@ -82,9 +81,7 @@ function Clientes() {
                 ))}
                 {clientes.length === 0 && (
                   <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', color: '#9ca3af', padding: '32px 0', fontSize: 14 }}>
-                      Nenhum cliente cadastrado
-                    </td>
+                    <td colSpan={7} className="table-empty">Nenhum cliente cadastrado</td>
                   </tr>
                 )}
               </tbody>
