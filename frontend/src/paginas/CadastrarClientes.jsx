@@ -95,7 +95,24 @@ function CadastrarClientes() {
   return (
     <div className="page-shell">
       <Header />
-      <div className="page-title-bar">{editando ? 'Editar Cliente' : 'Cadastro de Clientes'}</div>
+
+      {editando ? (
+        <div className="action-bar action-bar--contexto">
+          <button className="action-bar-btn" onClick={() => navigate(-1)}>
+            <i className="bi bi-arrow-left"></i>
+            Voltar
+          </button>
+          <span className="action-bar-contexto-text">Editando cliente #{id}</span>
+          <div style={{ width: 80 }} />
+        </div>
+      ) : (
+        <div className="action-bar">
+          <button className="action-bar-btn" onClick={() => navigate(-1)}>
+            <i className="bi bi-arrow-left"></i>
+            Voltar
+          </button>
+        </div>
+      )}
 
       <div className="page-content page-content--narrow">
         {erro && <div className="alert-erro">{erro}</div>}

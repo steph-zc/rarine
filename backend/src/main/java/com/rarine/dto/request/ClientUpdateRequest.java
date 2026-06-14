@@ -11,6 +11,8 @@ public record ClientUpdateRequest(
     @NotNull ClientType type,
     @NotBlank @Size(max = 200) String name,
     @NotBlank @Size(max = 30) String document,
+    @Size(max = 18) String cnpj,
+    @Size(max = 200) String razaoSocial,
     @Email @Size(max = 200) String email,
     @Size(max = 30) String phone,
     @Size(max = 100) String city,

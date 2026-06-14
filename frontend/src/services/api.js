@@ -38,16 +38,18 @@ export const api = {
     listar: () => request('/embroidery-colors'),
     criar: (data) => request('/embroidery-colors', { method: 'POST', body: JSON.stringify(data) }),
     editar: (id, data) => request(`/embroidery-colors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    excluir: (id) => request(`/embroidery-colors/${id}`, { method: 'DELETE' }),
   },
   ordens: {
     listar: () => request('/orders'),
     buscar: (id) => request(`/orders/${id}`),
+    relatorioUrl: (id) => `${BASE_URL}/orders/${id}/report`,
     criar: (data) => request('/orders', { method: 'POST', body: JSON.stringify(data) }),
     editar: (id, data) => request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    atualizarStatus: (id, status) => request(`/orders/${id}/status?status=${status}`, { method: 'PATCH' }),
+    atualizarPreco: (id, price) => request(`/orders/${id}/price?price=${encodeURIComponent(price || '')}`, { method: 'PATCH' }),
     adicionarItem: (orderId, data) =>
       request(`/orders/${orderId}/items`, { method: 'POST', body: JSON.stringify(data) }),
-    adicionarBordado: (orderId, itemId, data) =>
-      request(`/orders/${orderId}/items/${itemId}/embroideries`, { method: 'POST', body: JSON.stringify(data) }),
     anexar: async (orderId, formData) => {
       let res
       try {

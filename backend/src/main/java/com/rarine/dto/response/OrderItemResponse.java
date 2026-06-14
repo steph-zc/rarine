@@ -7,10 +7,9 @@ public record OrderItemResponse(
     Long productId,
     String productName,
     String color,
-    String size,
     String collar,
+    String manga,
     String fabric,
-    int quantity,
-    String notes,
+    boolean hasPrint,
     List<ItemEmbroideryResponse> embroideries
 ) {}

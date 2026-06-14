@@ -78,6 +78,8 @@ public class ClientController {
     c.setType(request.type());
     c.setName(request.name());
     c.setDocument(request.document());
+    c.setCnpj(request.cnpj());
+    c.setRazaoSocial(request.razaoSocial());
     c.setEmail(request.email());
     c.setPhone(request.phone());
     c.setCity(request.city());
@@ -93,6 +95,8 @@ public class ClientController {
     c.setType(request.type());
     c.setName(request.name());
     c.setDocument(request.document());
+    c.setCnpj(request.cnpj());
+    c.setRazaoSocial(request.razaoSocial());
     c.setEmail(request.email());
     c.setPhone(request.phone());
     c.setCity(request.city());
@@ -110,6 +114,8 @@ public class ClientController {
         c.getType(),
         c.getName(),
         c.getDocument(),
+        c.getCnpj(),
+        c.getRazaoSocial(),
         c.getEmail(),
         c.getPhone(),
         c.getCity(),

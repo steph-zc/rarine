@@ -26,5 +26,5 @@ export function nameWithHex(displayName, hex) {
 }
 
 export function hexFromCor(cor) {
-  return extractHexFromName(cor?.name) || cor?.hexColor || null
+  return cor?.hexColor || extractHexFromName(cor?.name) || null
 }

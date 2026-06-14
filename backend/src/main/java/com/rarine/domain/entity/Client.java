@@ -29,6 +29,12 @@ public class Client {
   @Column(name = "document", nullable = false, length = 30, unique = true)
   private String document;
 
+  @Column(name = "cnpj", length = 18)
+  private String cnpj;
+
+  @Column(name = "razao_social", length = 200)
+  private String razaoSocial;
+
   @Column(name = "email", length = 200)
   private String email;
 
@@ -91,6 +97,22 @@ public class Client {
 
   public void setDocument(String document) {
     this.document = document;
+  }
+
+  public String getCnpj() {
+    return cnpj;
+  }
+
+  public void setCnpj(String cnpj) {
+    this.cnpj = cnpj;
+  }
+
+  public String getRazaoSocial() {
+    return razaoSocial;
+  }
+
+  public void setRazaoSocial(String razaoSocial) {
+    this.razaoSocial = razaoSocial;
   }
 
   public String getEmail() {

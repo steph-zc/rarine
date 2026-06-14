@@ -8,7 +8,11 @@ import com.rarine.repository.EmbroideryColorRepository;
 
 import jakarta.validation.Valid;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -37,6 +42,7 @@ public class EmbroideryColorController {
         ec.setName(request.name());
         ec.setThreadCode(request.threadCode());
         ec.setBrand(request.brand());
+        ec.setHexColor(request.hexColor());
         return toResponse(repository.save(ec));
     }
 
@@ -60,12 +66,33 @@ public class EmbroideryColorController {
         ec.setName(request.name());
         ec.setThreadCode(request.threadCode());
         ec.setBrand(request.brand());
+        ec.setHexColor(request.hexColor());
         return toResponse(repository.save(ec));
+    }
+
+    // RN03.02 / UC-10: excluir cor quando não estiver mais em uso
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        if (!repository.existsById(id)) {
+            throw new NotFoundException("Embroidery color not found");
+        }
+        repository.deleteById(id);
     }
 
     private EmbroideryColorResponse toResponse(EmbroideryColor ec) {
         return new EmbroideryColorResponse(
                 ec.getId(), ec.getName(), ec.getThreadCode(),
-                ec.getBrand(), ec.getCreatedAt(), ec.getUpdatedAt());
+                ec.getBrand(), ec.getHexColor(), ec.getCreatedAt(), ec.getUpdatedAt());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    ProblemDetail handleInUse(DataIntegrityViolationException ex) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Cor em uso");
+        pd.setDetail("Esta cor está vinculada a bordados de pedidos e não pode ser excluída.");
+        pd.setType(URI.create("urn:rarine:conflict"));
+        return pd;
     }
 }

@@ -18,7 +18,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import com.rarine.domain.enums.EmbroideryLocation;
+import com.rarine.domain.enums.PrintLocation;
 
 @Entity
 @Table(name = "item_embroideries")
@@ -34,7 +34,7 @@ public class ItemEmbroidery {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "location", nullable = false, length = 50)
-    private EmbroideryLocation location;
+    private PrintLocation location;
 
     @Column(name = "description")
     private String description;
@@ -58,8 +58,8 @@ public class ItemEmbroidery {
     public OrderItem getOrderItem() { return orderItem; }
     public void setOrderItem(OrderItem orderItem) { this.orderItem = orderItem; }
 
-    public EmbroideryLocation getLocation() { return location; }
-    public void setLocation(EmbroideryLocation location) { this.location = location; }
+    public PrintLocation getLocation() { return location; }
+    public void setLocation(PrintLocation location) { this.location = location; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

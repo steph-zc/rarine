@@ -3,7 +3,10 @@ package com.rarine.controller;
 import java.util.List;
 
 import com.rarine.domain.entity.Product;
+import com.rarine.domain.entity.ProductApplicationLocation;
+import com.rarine.dto.request.ApplicationLocationRequest;
 import com.rarine.dto.request.ProductCreateRequest;
+import com.rarine.dto.response.ApplicationLocationResponse;
 import com.rarine.dto.response.ProductResponse;
 import com.rarine.repository.ProductRepository;
 
@@ -45,6 +48,7 @@ public class ProductController {
     p.setBaseColor(request.baseColor());
     p.setHasEmbroidery(request.hasEmbroidery());
     p.setHasPrint(request.hasPrint());
+    applyLocations(p, request.applicationLocations());
     Product saved = repository.save(p);
     return toResponse(saved);
   }
@@ -74,8 +78,23 @@ public class ProductController {
     p.setBaseColor(request.baseColor());
     p.setHasEmbroidery(request.hasEmbroidery());
     p.setHasPrint(request.hasPrint());
+    applyLocations(p, request.applicationLocations());
     Product saved = repository.save(p);
     return toResponse(saved);
+  }
+
+  /** Substitui os locais de aplicação do produto pelos informados na requisição. */
+  private void applyLocations(Product p, List<ApplicationLocationRequest> locations) {
+    p.getApplicationLocations().clear();
+    if (locations == null) return;
+    for (ApplicationLocationRequest loc : locations) {
+      if (loc == null || loc.location() == null || loc.location().isBlank()) continue;
+      ProductApplicationLocation pal = new ProductApplicationLocation();
+      pal.setProduct(p);
+      pal.setLocation(loc.location());
+      pal.setSize(loc.size());
+      p.getApplicationLocations().add(pal);
+    }
   }
 
   @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -96,6 +115,9 @@ public class ProductController {
   }
 
   private ProductResponse toResponse(Product p) {
+    List<ApplicationLocationResponse> locations = p.getApplicationLocations().stream()
+        .map(l -> new ApplicationLocationResponse(l.getId(), l.getLocation(), l.getSize()))
+        .toList();
     return new ProductResponse(
         p.getId(),
         p.getName(),
@@ -106,6 +128,7 @@ public class ProductController {
         p.getBaseColor(),
         p.isHasEmbroidery(),
         p.isHasPrint(),
+        locations,
         p.getCreatedAt(),
         p.getUpdatedAt()
     );

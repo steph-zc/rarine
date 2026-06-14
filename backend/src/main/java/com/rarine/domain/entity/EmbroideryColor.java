@@ -26,6 +26,9 @@ public class EmbroideryColor {
     @Column(name = "brand", length = 100)
     private String brand;
 
+    @Column(name = "hex_color", length = 7)
+    private String hexColor;
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -42,6 +45,9 @@ public class EmbroideryColor {
 
     public String getBrand() { return brand; }
     public void setBrand(String brand) { this.brand = brand; }
+
+    public String getHexColor() { return hexColor; }
+    public void setHexColor(String hexColor) { this.hexColor = hexColor; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
