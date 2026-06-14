@@ -1,105 +1,93 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
+import { api } from '../services/api'
 
 function Clientes() {
+  const navigate = useNavigate()
+  const [clientes, setClientes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [erro, setErro] = useState(null)
 
-  const clientes = [
-    {
-      id: 1,
-      nome: 'João Silva',
-      fantasia: 'JS Serviços',
-      cpf: '123.456.789-00',
-      cnpj: '12.345.678/0001-99',
-      telefone: '(51) 99999-9999',
-      celular: '(51) 98888-8888'
-    },
-    {
-      id: 2,
-      nome: 'Maria Souza',
-      fantasia: 'MS Comércio',
-      cpf: '987.654.321-00',
-      cnpj: '98.765.432/0001-11',
-      telefone: '(51) 97777-7777',
-      celular: '(51) 96666-6666'
+  useEffect(() => {
+    api.clientes.listar()
+      .then(setClientes)
+      .catch(e => setErro(e.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleInativar = async (id) => {
+    if (!window.confirm('Deseja inativar este cliente?')) return
+    try {
+      await api.clientes.inativar(id)
+      setClientes(prev => prev.map(c => c.id === id ? { ...c, active: false } : c))
+    } catch (e) {
+      alert('Erro ao inativar: ' + e.message)
     }
-  ]
+  }
 
   return (
     <div>
-
       <Header />
-
-      <div className="bg-danger text-white px-3 py-1">
-        Clientes
+      <div className="action-bar">
+        <button className="action-bar-btn" onClick={() => navigate('/cadastrar-clientes')}>
+          <i className="bi bi-person-plus"></i>
+          Novo Cliente
+        </button>
       </div>
 
-      <div
-        className="d-flex align-items-center gap-5 px-3 py-2"
-        style={{ backgroundColor: '#9fc3ea' }}
-      >
-
-        <div className="text-center">
-          <i className="bi bi-file-earmark-plus fs-1"></i>
-          <p className="m-0">Novo - F4</p>
-        </div>
-
-        <div className="text-center">
-          <i className="bi bi-pencil-square fs-1"></i>
-          <p className="m-0">Editar - F5</p>
-        </div>
-
-        <div className="text-center">
-          <i className="bi bi-trash fs-1"></i>
-          <p className="m-0">Excluir - F6</p>
-        </div>
-
-        <div className="text-center">
-          <i className="bi bi-arrow-left-right fs-1"></i>
-          <p className="m-0">Transf. cad - F7</p>
-        </div>
-
-        <div className="text-center">
-          <i className="bi bi-eye fs-1"></i>
-          <p className="m-0">Visualizar - F9</p>
-        </div>
-
+      <div className="page-content">
+        {loading && <p className="loading-text">Carregando...</p>}
+        {erro && <div className="alert-erro">{erro}</div>}
+        {!loading && !erro && (
+          <div className="r-table-wrap">
+            <table className="r-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nome</th>
+                  <th>Tipo</th>
+                  <th>Telefone</th>
+                  <th>Email</th>
+                  <th>Ativo</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clientes.map(c => (
+                  <tr key={c.id}>
+                    <td style={{ color: '#6b7280', fontSize: 12 }}>#{c.id}</td>
+                    <td style={{ fontWeight: 600 }}>{c.name}</td>
+                    <td>{c.type === 'PF' ? 'Pessoa Física' : c.type === 'PJ' ? 'Pessoa Jurídica' : c.type}</td>
+                    <td>{c.phone || '—'}</td>
+                    <td>{c.email || '—'}</td>
+                    <td>
+                      <span className={`badge-status ${c.active ? 'badge-ativo' : 'badge-inativo'}`}>
+                        {c.active ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="btn-tabela btn-editar" onClick={() => navigate(`/cadastrar-clientes/${c.id}`)}>
+                        Editar
+                      </button>
+                      {c.active && (
+                        <button className="btn-tabela btn-inativar" onClick={() => handleInativar(c.id)}>
+                          Inativar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {clientes.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="table-empty">Nenhum cliente cadastrado</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-
-      <div className="container-fluid mt-3">
-
-        <table className="table table-bordered table-striped">
-
-          <thead className="table-secondary">
-            <tr>
-              <th>Código</th>
-              <th>Cliente</th>
-              <th>Fantasia</th>
-              <th>CPF</th>
-              <th>CNPJ</th>
-              <th>Telefone</th>
-              <th>Celular</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {clientes.map((cliente) => (
-              <tr key={cliente.id}>
-                <td>{cliente.id}</td>
-                <td>{cliente.nome}</td>
-                <td>{cliente.fantasia}</td>
-                <td>{cliente.cpf}</td>
-                <td>{cliente.cnpj}</td>
-                <td>{cliente.telefone}</td>
-                <td>{cliente.celular}</td>
-              </tr>
-            ))}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
     </div>
   )
 }

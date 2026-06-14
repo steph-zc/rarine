@@ -7,6 +7,7 @@ public record EmbroideryColorResponse(
     String name,
     String threadCode,
     String brand,
+    String hexColor,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}

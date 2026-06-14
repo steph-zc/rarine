@@ -13,6 +13,7 @@ public record OrderResponse(
     OrderStatus status,
     LocalDate deadline,
     String notes,
+    String price,
     List<OrderItemResponse> items,
     List<OrderAttachmentResponse> attachments,
     OffsetDateTime createdAt,

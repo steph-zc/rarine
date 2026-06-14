@@ -32,6 +32,10 @@ public class OrderItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    // Snapshot do nome do produto no momento do pedido (RN02.01)
+    @Column(name = "product_name", length = 200)
+    private String productName;
+
     @Column(name = "color", length = 100)
     private String color;
 
@@ -41,11 +45,17 @@ public class OrderItem {
     @Column(name = "collar", length = 100)
     private String collar;
 
+    @Column(name = "manga", length = 50)
+    private String manga;
+
     @Column(name = "fabric", length = 100)
     private String fabric;
 
     @Column(name = "quantity", nullable = false)
-    private int quantity;
+    private int quantity = 1;
+
+    @Column(name = "has_print", nullable = false)
+    private boolean hasPrint = false;
 
     @Column(name = "notes")
     private String notes;
@@ -65,16 +75,22 @@ public class OrderItem {
     public void setOrder(Order order) { this.order = order; }
     public Product getProduct() { return product; }
     public void setProduct(Product product) { this.product = product; }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
     public String getSize() { return size; }
     public void setSize(String size) { this.size = size; }
     public String getCollar() { return collar; }
     public void setCollar(String collar) { this.collar = collar; }
+    public String getManga() { return manga; }
+    public void setManga(String manga) { this.manga = manga; }
     public String getFabric() { return fabric; }
     public void setFabric(String fabric) { this.fabric = fabric; }
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+    public boolean isHasPrint() { return hasPrint; }
+    public void setHasPrint(boolean hasPrint) { this.hasPrint = hasPrint; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
     public Set<ItemEmbroidery> getEmbroideries() { return embroideries; }

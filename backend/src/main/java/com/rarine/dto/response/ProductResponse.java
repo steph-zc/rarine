@@ -1,6 +1,7 @@
 package com.rarine.dto.response;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public record ProductResponse(
     Long id,
@@ -12,7 +13,7 @@ public record ProductResponse(
     String baseColor,
     boolean hasEmbroidery,
     boolean hasPrint,
+    List<ApplicationLocationResponse> applicationLocations,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}
-

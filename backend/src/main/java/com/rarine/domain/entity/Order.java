@@ -35,13 +35,17 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
-    private OrderStatus status = OrderStatus.OPEN;
+    private OrderStatus status = OrderStatus.PEDIDO;
 
     @Column(name = "deadline")
     private LocalDate deadline;
 
     @Column(name = "notes")
     private String notes;
+
+    // Preço lançado por pedido (texto livre, consultável no perfil do cliente)
+    @Column(name = "price", length = 100)
+    private String price;
 
     // Set em vez de List — evita MultipleBagFetchException
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -65,6 +69,8 @@ public class Order {
     public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getPrice() { return price; }
+    public void setPrice(String price) { this.price = price; }
     public Set<OrderItem> getItems() { return items; }
     public Set<OrderAttachment> getAttachments() { return attachments; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

@@ -1,17 +1,19 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
+import EstampaSelector from '../components/EstampaSelector'
+import OrderItemCard from '../components/OrderItemCard'
 import { api } from '../services/api'
-import { hexFromCor, stripHexFromName } from '../utils/corBordado'
-import { embroideryFormToApi, orderInfoToApi } from '../utils/orderMappers'
+import { orderInfoToApi } from '../utils/orderMappers'
+import { estampasDoProduto } from '../utils/printLocations'
 
-const STATUS_LABEL = { Pedido: 'Pedido', Producao: 'Produção', Pronto: 'Pronto', Entregue: 'Entregue' }
-const STATUS_CLASS  = { Pedido: 'badge-open', Producao: 'badge-progress', Pronto: 'badge-done', Entregue: 'badge-inativo' }
-const LOCAIS = ['frente', 'costas', 'manga']
+const STATUS_LABEL = { PEDIDO: 'Pedido', PRODUCAO: 'Em Produção', PRONTO: 'Pronto', ENTREGUE: 'Entregue' }
+const STATUS_CLASS  = { PEDIDO: 'badge-open', PRODUCAO: 'badge-progress', PRONTO: 'badge-done', ENTREGUE: 'badge-inativo' }
 
 // Gola / Tecido com iniciais maiúsculas
 const GOLAS   = [{ val: 'redonda', label: 'Redonda' }, { val: 'polo', label: 'Polo' }, { val: 'V', label: 'V' }, { val: 'canoa', label: 'Canoa' }]
 const TECIDOS = [{ val: 'algodão', label: 'Algodão' }, { val: 'dry', label: 'Dry' }, { val: 'cross', label: 'Cross' }, { val: 'PV', label: 'PV' }]
+const MANGAS  = [{ val: 'manga curta', label: 'Manga curta' }, { val: 'manga longa', label: 'Manga longa' }, { val: 'raglan', label: 'Raglan' }, { val: 'cavada', label: 'Cavada' }]
 
 function OrdemServico() {
   const { id } = useParams()
@@ -29,11 +31,8 @@ function OrdemServico() {
   const [salvandoInfo, setSalvandoInfo] = useState(false)
 
   // Item form — inclui gola e tecido por item (caso de uso: "Definir características por item")
-  const itemInicial = { productId: '', color: '', size: '', collar: '', fabric: '', quantity: 1, notes: '' }
+  const itemInicial = { productId: '', color: '', collar: '', manga: '', fabric: '', hasPrint: false, estampas: [] }
   const [itemForm, setItemForm] = useState(itemInicial)
-
-  const embInicial = { itemId: '', local: 'frente', descricao: '', colorIds: [] }
-  const [embForm, setEmbForm] = useState(embInicial)
 
   const [anexoFile, setAnexoFile] = useState(null)
   const [descAnexo, setDescAnexo] = useState('')
@@ -63,29 +62,38 @@ function OrdemServico() {
     finally { setSalvandoInfo(false) }
   }
 
+  const handleProdutoChange = (produtoId) => {
+    const prod = produtos.find(p => String(p.id) === String(produtoId))
+    const temBordado = !!(prod?.hasEmbroidery || prod?.hasPrint)
+    const estampas = temBordado ? estampasDoProduto(prod?.applicationLocations) : []
+    setItemForm(f => ({
+      ...f,
+      productId: produtoId,
+      color:  prod?.baseColor || prod?.corBase || '',
+      collar: prod?.collar    || prod?.gola    || '',
+      manga:  prod?.model     || prod?.modelo  || '',
+      fabric: prod?.fabric    || prod?.tecido  || '',
+      hasPrint: temBordado,
+      estampas,
+    }))
+  }
+
   const adicionarItem = async (e) => {
     e.preventDefault()
     setSalvando(true)
     try {
       await api.ordens.adicionarItem(id, {
-        ...itemForm,
         productId: Number(itemForm.productId),
-        quantity: Number(itemForm.quantity),
+        color:     itemForm.color || null,
+        collar:    itemForm.collar || null,
+        manga:     itemForm.manga || null,
+        fabric:    itemForm.fabric || null,
+        hasPrint:  itemForm.hasPrint,
+        estampas:  itemForm.hasPrint
+          ? itemForm.estampas.map(es => ({ location: es.location, description: es.descricao?.trim() || null, colorIds: es.colorIds.map(Number) }))
+          : [],
       })
       setItemForm(itemInicial)
-      carregar()
-    } catch (e) { alert('Erro: ' + e.message) }
-    finally { setSalvando(false) }
-  }
-
-  const adicionarBordado = async (e) => {
-    e.preventDefault()
-    if (embForm.colorIds.length === 0) return alert('Selecione ao menos uma cor')
-    if (embForm.colorIds.length > 6) return alert('Máximo 6 cores por bordado')
-    setSalvando(true)
-    try {
-      await api.ordens.adicionarBordado(id, embForm.itemId, embroideryFormToApi(embForm))
-      setEmbForm(embInicial)
       carregar()
     } catch (e) { alert('Erro: ' + e.message) }
     finally { setSalvando(false) }
@@ -111,19 +119,17 @@ function OrdemServico() {
   if (!ordem)  return null
 
   const statusKey = ordem.status
-  const bloqueado = statusKey === 'Producao'
+  // RN04.03: edição de itens liberada apenas enquanto a OS está em "Pedido"
+  const bloqueado = statusKey !== 'PEDIDO'
 
   return (
     <div>
       <Header />
-      <div className="page-title-bar page-title-bar--with-back">
-        <button type="button" className="page-title-back" onClick={() => navigate('/pedidos')}>
-          <i className="bi bi-arrow-left" aria-hidden />
+      <div className="action-bar">
+        <button className="action-bar-btn" onClick={() => navigate('/pedidos')}>
+          <i className="bi bi-arrow-left"></i>
           Voltar
         </button>
-        <span className="page-title-bar-text">
-          OS #{ordem.id} — {ordem.clientName || ordem.clienteNome}
-        </span>
       </div>
 
       <div className="page-content">
@@ -131,6 +137,17 @@ function OrdemServico() {
 
           {/* ── Coluna esquerda ─────────────────────── */}
           <div className="col-md-7">
+
+            {/* Itens — movido para o topo para visualização rápida */}
+            <div className="form-card">
+              <h6>Itens ({ordem.items?.length || 0})</h6>
+              {!ordem.items?.length && (
+                <p className="text-muted">Nenhum item adicionado</p>
+              )}
+              {ordem.items?.map(item => (
+                <OrderItemCard key={item.id} item={item} />
+              ))}
+            </div>
 
             {/* Informações da OS */}
             <div className="form-card">
@@ -201,7 +218,7 @@ function OrdemServico() {
                     <select
                       className="r-select"
                       value={itemForm.productId}
-                      onChange={e => setItemForm(f => ({ ...f, productId: e.target.value }))}
+                      onChange={e => handleProdutoChange(e.target.value)}
                       required
                     >
                       <option value="">Selecione</option>
@@ -209,41 +226,51 @@ function OrdemServico() {
                     </select>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <div>
-                      <label className="r-label">Cor *</label>
-                      <input className="r-input" value={itemForm.color} onChange={e => setItemForm(f => ({ ...f, color: e.target.value }))} required />
-                    </div>
-                    <div>
-                      <label className="r-label">Tamanho *</label>
-                      <input className="r-input" value={itemForm.size} onChange={e => setItemForm(f => ({ ...f, size: e.target.value }))} required />
-                    </div>
-                    <div>
-                      <label className="r-label">Quantidade *</label>
-                      <input className="r-input" type="number" min={1} value={itemForm.quantity} onChange={e => setItemForm(f => ({ ...f, quantity: e.target.value }))} required />
-                    </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <label className="r-label">Cor *</label>
+                    <input className="r-input" value={itemForm.color} onChange={e => setItemForm(f => ({ ...f, color: e.target.value }))} required />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
                     <div>
                       <label className="r-label">Gola</label>
                       <select className="r-select" value={itemForm.collar} onChange={e => setItemForm(f => ({ ...f, collar: e.target.value }))}>
-                        <option value="">— padrão do produto —</option>
+                        <option value="">— padrão —</option>
                         {GOLAS.map(g => <option key={g.val} value={g.val}>{g.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="r-label">Manga</label>
+                      <select className="r-select" value={itemForm.manga} onChange={e => setItemForm(f => ({ ...f, manga: e.target.value }))}>
+                        <option value="">— padrão —</option>
+                        {MANGAS.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="r-label">Tecido</label>
                       <select className="r-select" value={itemForm.fabric} onChange={e => setItemForm(f => ({ ...f, fabric: e.target.value }))}>
-                        <option value="">— padrão do produto —</option>
+                        <option value="">— padrão —</option>
                         {TECIDOS.map(t => <option key={t.val} value={t.val}>{t.label}</option>)}
                       </select>
                     </div>
                   </div>
 
                   <div style={{ marginBottom: 12 }}>
-                    <label className="r-label">Observações</label>
-                    <input className="r-input" value={itemForm.notes} onChange={e => setItemForm(f => ({ ...f, notes: e.target.value }))} />
+                    <label className="r-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={itemForm.hasPrint}
+                        onChange={e => setItemForm(f => ({ ...f, hasPrint: e.target.checked, estampas: e.target.checked ? f.estampas : [] }))}
+                      />
+                      Tem estampa / bordado
+                    </label>
+                    {itemForm.hasPrint && (
+                      <EstampaSelector
+                        cores={cores}
+                        estampas={itemForm.estampas}
+                        onChange={est => setItemForm(f => ({ ...f, estampas: est }))}
+                      />
+                    )}
                   </div>
 
                   <button type="submit" className="btn-primary-r" disabled={salvando} style={{ fontSize: 13 }}>
@@ -255,132 +282,14 @@ function OrdemServico() {
 
             {bloqueado && (
               <div className="alert-aviso">
-                Edição de itens bloqueada — OS em produção.
+                Edição de itens bloqueada — a OS não está mais em "Pedido".
               </div>
             )}
 
-            {/* Lista de itens */}
-            <div className="form-card">
-              <h6>Itens ({ordem.items?.length || 0})</h6>
-              {!ordem.items?.length && (
-                <p className="text-muted">Nenhum item adicionado</p>
-              )}
-              {ordem.items?.map(item => (
-                <div key={item.id} className="os-item-card">
-                  <div className="os-item-title">
-                    {item.productName || item.nomeProduto}
-                  </div>
-                  <div className="os-item-meta">
-                    {item.quantity || item.quantidade}x · Tam: {item.size || item.tamanho} · Cor: {item.color || item.cor}
-                    {(item.collar || item.gola) && ` · Gola: ${item.collar || item.gola}`}
-                    {(item.fabric || item.tecido) && ` · Tecido: ${item.fabric || item.tecido}`}
-                  </div>
-                  {(item.notes || item.observacoes) && (
-                    <div className="os-item-notes">
-                      {item.notes || item.observacoes}
-                    </div>
-                  )}
-                  {item.embroideries?.map(emb => (
-                    <div key={emb.id} className="os-emb-line">
-                      <i className="bi bi-scissors" />
-                      <strong style={{ textTransform: 'capitalize' }}>{emb.local || emb.location}</strong>:&nbsp;
-                      {emb.descricao || emb.description}
-                      {emb.colors?.length > 0 && (
-                        <span style={{ display: 'flex', gap: 4, marginLeft: 4 }}>
-                          {emb.colors.map(c => (
-                            <span key={c.id} title={stripHexFromName(c.name || c.nome)} style={{
-                              display: 'inline-block', width: 12, height: 12, borderRadius: '50%',
-                              background: hexFromCor(c) || '#9ca3af',
-                              border: '1px solid rgba(0,0,0,0.15)',
-                            }} />
-                          ))}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* ── Coluna direita ───────────────────────── */}
           <div className="col-md-5">
-
-            {/* Adicionar bordado */}
-            {!bloqueado && (
-              <div className="form-card">
-                <h6>Adicionar Bordado</h6>
-                <form onSubmit={adicionarBordado}>
-                  <div style={{ marginBottom: 10 }}>
-                    <label className="r-label">Item *</label>
-                    <select className="r-select" value={embForm.itemId} onChange={e => setEmbForm(f => ({ ...f, itemId: e.target.value }))} required>
-                      <option value="">Selecione o item</option>
-                      {ordem.items?.map(i => (
-                        <option key={i.id} value={i.id}>
-                          {i.productName || i.nomeProduto} — {i.size || i.tamanho} {i.color || i.cor}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={{ marginBottom: 10 }}>
-                    <label className="r-label">Local *</label>
-                    <select className="r-select" value={embForm.local} onChange={e => setEmbForm(f => ({ ...f, local: e.target.value }))}>
-                      {LOCAIS.map(l => (
-                        <option key={l} value={l} style={{ textTransform: 'capitalize' }}>
-                          {l.charAt(0).toUpperCase() + l.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={{ marginBottom: 10 }}>
-                    <label className="r-label">Descrição</label>
-                    <input className="r-input" value={embForm.descricao} onChange={e => setEmbForm(f => ({ ...f, descricao: e.target.value }))} />
-                  </div>
-
-                  <div style={{ marginBottom: 14 }}>
-                    <label className="r-label">
-                      Cores * <span className="label-hint">(Ctrl+clique, máx. 6)</span>
-                    </label>
-                    <select
-                      className="r-select"
-                      multiple
-                      value={embForm.colorIds}
-                      style={{ height: 100 }}
-                      onChange={e => setEmbForm(f => ({ ...f, colorIds: Array.from(e.target.selectedOptions, o => o.value) }))}
-                    >
-                      {cores.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {stripHexFromName(c.name || c.nome)} ({c.threadCode || c.codigoLinha})
-                        </option>
-                      ))}
-                    </select>
-                    {embForm.colorIds.length > 0 && (
-                      <div className="color-chips">
-                        {embForm.colorIds.map(cid => {
-                          const cor = cores.find(c => String(c.id) === String(cid))
-                          return cor ? (
-                            <span key={cid} className="color-chip">
-                              <span style={{
-                                width: 10, height: 10, borderRadius: '50%',
-                                background: hexFromCor(cor) || '#9ca3af',
-                                border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0,
-                              }} />
-                              {stripHexFromName(cor.name || cor.nome)}
-                            </span>
-                          ) : null
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <button type="submit" className="btn-secondary-r" disabled={salvando} style={{ fontSize: 13 }}>
-                    + Adicionar Bordado
-                  </button>
-                </form>
-              </div>
-            )}
 
             {/* Anexar arquivo */}
             <div className="form-card">

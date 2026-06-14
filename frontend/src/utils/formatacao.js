@@ -2,6 +2,13 @@ export function apenasDigitos(valor) {
   return (valor || '').replace(/\D/g, '')
 }
 
+/** Primeira letra maiúscula (ex.: "polo" -> "Polo", "algodão" -> "Algodão"). */
+export function capitalizar(valor) {
+  const s = (valor ?? '').toString().trim()
+  if (!s) return ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 /** (00) 0 0000-0000 — celular com 11 dígitos; fixo com 10. */
 export function formatarTelefone(valor) {
   const d = apenasDigitos(valor).slice(0, 11)

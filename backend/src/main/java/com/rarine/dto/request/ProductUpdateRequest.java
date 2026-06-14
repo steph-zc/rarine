@@ -1,5 +1,7 @@
 package com.rarine.dto.request;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -12,5 +14,6 @@ public record ProductUpdateRequest(
         @Size(max = 100) String fabric,
         @Size(max = 100) String baseColor,
         @NotNull Boolean hasEmbroidery,
-        @NotNull Boolean hasPrint
+        @NotNull Boolean hasPrint,
+        List<ApplicationLocationRequest> applicationLocations
 ) {}

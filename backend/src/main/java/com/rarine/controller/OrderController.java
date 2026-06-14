@@ -1,18 +1,21 @@
 package com.rarine.controller;
 
 import com.rarine.domain.entity.*;
-import com.rarine.dto.request.ItemEmbroideryCreateRequest;
+import com.rarine.dto.request.EstampaCreateRequest;
 import com.rarine.dto.request.OrderCreateRequest;
 import com.rarine.dto.request.OrderItemCreateRequest;
 import com.rarine.dto.request.OrderUpdateRequest;
 import com.rarine.dto.response.*;
 import com.rarine.exception.NotFoundException;
+import com.rarine.report.OrderReportGenerator;
 import com.rarine.repository.*;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -94,6 +97,34 @@ public class OrderController {
         return fetchAndMap(id);
     }
 
+    // ── Lançar Preço do Pedido (texto livre, perfil do cliente) ───────────────
+
+    @PatchMapping("/{id}/price")
+    public OrderResponse updatePrice(@PathVariable Long id,
+                                     @RequestParam(required = false) String price) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        order.setPrice(price == null || price.isBlank() ? null : price.trim());
+        orderRepository.save(order);
+        return fetchAndMap(id);
+    }
+
+    // ── Alterar Status do Pedido ──────────────────────────────────────────────
+
+    @PatchMapping("/{id}/status")
+    public OrderResponse updateStatus(@PathVariable Long id,
+                                      @RequestParam String status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        try {
+            order.setStatus(com.rarine.domain.enums.OrderStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Status inválido: " + status);
+        }
+        orderRepository.save(order);
+        return fetchAndMap(id);
+    }
+
     // ── Adicionar Item ao Pedido ──────────────────────────────────────────────
 
     @PostMapping("/{orderId}/items")
@@ -102,53 +133,62 @@ public class OrderController {
                                      @Valid @RequestBody OrderItemCreateRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+        // RN04.03: itens só podem ser editados enquanto a OS está em "Pedido"
+        if (order.getStatus() != com.rarine.domain.enums.OrderStatus.PEDIDO) {
+            throw new IllegalStateException("Itens só podem ser adicionados enquanto a OS está em Pedido.");
+        }
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
         OrderItem item = new OrderItem();
         item.setOrder(order);
         item.setProduct(product);
+        item.setProductName(product.getName()); // snapshot (RN02.01)
         item.setColor(request.color());
-        item.setSize(request.size());
         item.setCollar(request.collar());
+        item.setManga(request.manga());
         item.setFabric(request.fabric());
-        item.setQuantity(request.quantity());
-        item.setNotes(request.notes());
+        item.setQuantity(1); // tamanho/quantidade são preenchidos à mão na ficha impressa
+        item.setHasPrint(Boolean.TRUE.equals(request.hasPrint()));
+
+        // Estampa/bordado: cada local escolhido com suas cores (conceito unificado)
+        if (request.estampas() != null) {
+            for (EstampaCreateRequest est : request.estampas()) {
+                if (est == null || est.location() == null) continue;
+                Set<EmbroideryColor> colors = est.colorIds() == null ? Set.of()
+                        : est.colorIds().stream()
+                            .map(cid -> embroideryColorRepository.findById(cid)
+                                    .orElseThrow(() -> new NotFoundException("Embroidery color not found: " + cid)))
+                            .collect(Collectors.toSet());
+                ItemEmbroidery emb = new ItemEmbroidery();
+                emb.setOrderItem(item);
+                emb.setLocation(est.location());
+                emb.setDescription(est.description());
+                emb.setColors(colors);
+                item.getEmbroideries().add(emb);
+            }
+        }
 
         return toItemResponse(orderItemRepository.save(item));
     }
 
-    // ── Definir Bordado no Item ───────────────────────────────────────────────
+    // ── Gerar Ficha Técnica (PDF) ─────────────────────────────────────────────
 
-    @PostMapping("/{orderId}/items/{itemId}/embroideries")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ItemEmbroideryResponse addEmbroidery(@PathVariable Long orderId,
-                                                @PathVariable Long itemId,
-                                                @Valid @RequestBody ItemEmbroideryCreateRequest request) {
-        if (!orderRepository.existsById(orderId)) {
-            throw new NotFoundException("Order not found");
-        }
-        OrderItem item = orderItemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException("Order item not found"));
-        if (!item.getOrder().getId().equals(orderId)) {
-            throw new NotFoundException("Order item not found");
-        }
+    @GetMapping("/{id}/report")
+    public ResponseEntity<byte[]> report(@PathVariable Long id) {
+        Order withItems = orderRepository.findByIdWithItemsAndEmbroideries(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        Order withAttachments = orderRepository.findByIdWithAttachments(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        Set<EmbroideryColor> colors = request.colorIds().stream()
-                .map(cid -> embroideryColorRepository.findById(cid)
-                        .orElseThrow(() -> new NotFoundException("Embroidery color not found: " + cid)))
-                .collect(Collectors.toSet());
+        byte[] pdf = OrderReportGenerator.generate(withItems,
+                new java.util.ArrayList<>(withAttachments.getAttachments()));
 
-        ItemEmbroidery emb = new ItemEmbroidery();
-        emb.setOrderItem(item);
-        emb.setLocation(request.location());
-        emb.setDescription(request.description());
-        emb.setColors(colors);
-
-        item.getEmbroideries().add(emb);
-        orderItemRepository.save(item);
-
-        return toEmbroideryResponse(emb);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"ficha-os-" + id + ".pdf\"")
+                .body(pdf);
     }
 
     // ── Anexar Imagem ao Pedido ───────────────────────────────────────────────
@@ -204,6 +244,7 @@ public class OrderController {
                 withItems.getStatus(),
                 withItems.getDeadline(),
                 withItems.getNotes(),
+                withItems.getPrice(),
                 items,
                 atts,
                 withItems.getCreatedAt(),
@@ -215,16 +256,17 @@ public class OrderController {
     private OrderItemResponse toItemResponse(OrderItem i) {
         List<ItemEmbroideryResponse> embs = i.getEmbroideries().stream()
                 .map(this::toEmbroideryResponse).toList();
+        // Usa o snapshot do nome (RN02.01); cai para o nome ao vivo apenas em itens legados
+        String productName = i.getProductName() != null ? i.getProductName() : i.getProduct().getName();
         return new OrderItemResponse(
                 i.getId(),
                 i.getProduct().getId(),
-                i.getProduct().getName(),
+                productName,
                 i.getColor(),
-                i.getSize(),
                 i.getCollar(),
+                i.getManga(),
                 i.getFabric(),
-                i.getQuantity(),
-                i.getNotes(),
+                i.isHasPrint(),
                 embs);
     }
 
@@ -232,7 +274,7 @@ public class OrderController {
         Set<EmbroideryColorResponse> colorResponses = e.getColors().stream()
                 .map(c -> new EmbroideryColorResponse(
                         c.getId(), c.getName(), c.getThreadCode(),
-                        c.getBrand(), c.getCreatedAt(), c.getUpdatedAt()))
+                        c.getBrand(), c.getHexColor(), c.getCreatedAt(), c.getUpdatedAt()))
                 .collect(Collectors.toSet());
         return new ItemEmbroideryResponse(
                 e.getId(), e.getLocation(), e.getDescription(), colorResponses);
@@ -242,5 +284,17 @@ public class OrderController {
         return new OrderAttachmentResponse(
                 a.getId(), a.getFileType(), a.getFilePath(),
                 a.getDescription(), a.getCreatedAt());
+    }
+
+    // ── Tratamento de erros de regra de negócio ───────────────────────────────
+
+    @ExceptionHandler({ IllegalStateException.class, IllegalArgumentException.class })
+    @ResponseStatus(HttpStatus.CONFLICT)
+    org.springframework.http.ProblemDetail handleBusinessRule(RuntimeException ex) {
+        org.springframework.http.ProblemDetail pd =
+                org.springframework.http.ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Regra de negócio");
+        pd.setDetail(ex.getMessage());
+        return pd;
     }
 }

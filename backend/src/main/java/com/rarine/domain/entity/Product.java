@@ -1,12 +1,17 @@
 package com.rarine.domain.entity;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -39,6 +44,10 @@ public class Product {
 
   @Column(name = "has_print", nullable = false)
   private boolean hasPrint;
+
+  // Locais de aplicação de bordado/estampa (PRODUTO_LOCAL_APLICACAO)
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+  private Set<ProductApplicationLocation> applicationLocations = new HashSet<>();
 
   @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
   private OffsetDateTime createdAt;
@@ -112,6 +121,14 @@ public class Product {
 
   public void setHasPrint(boolean hasPrint) {
     this.hasPrint = hasPrint;
+  }
+
+  public Set<ProductApplicationLocation> getApplicationLocations() {
+    return applicationLocations;
+  }
+
+  public void setApplicationLocations(Set<ProductApplicationLocation> applicationLocations) {
+    this.applicationLocations = applicationLocations;
   }
 
   public OffsetDateTime getCreatedAt() {

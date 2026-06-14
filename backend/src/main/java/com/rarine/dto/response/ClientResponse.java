@@ -9,6 +9,8 @@ public record ClientResponse(
     ClientType type,
     String name,
     String document,
+    String cnpj,
+    String razaoSocial,
     String email,
     String phone,
     String city,
