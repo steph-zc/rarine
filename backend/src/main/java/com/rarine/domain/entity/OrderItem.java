@@ -28,8 +28,8 @@ public class OrderItem {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "product_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "product_id", nullable = true)
     private Product product;
 
     // Snapshot do nome do produto no momento do pedido (RN02.01)
@@ -59,6 +59,9 @@ public class OrderItem {
 
     @Column(name = "notes")
     private String notes;
+
+    @Column(name = "price", length = 100)
+    private String price;
 
     // Set em vez de List — evita MultipleBagFetchException
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -93,6 +96,8 @@ public class OrderItem {
     public void setHasPrint(boolean hasPrint) { this.hasPrint = hasPrint; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getPrice() { return price; }
+    public void setPrice(String price) { this.price = price; }
     public Set<ItemEmbroidery> getEmbroideries() { return embroideries; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

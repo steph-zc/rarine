@@ -64,6 +64,14 @@ public class ClientController {
     return toResponse(saved);
   }
 
+  @PatchMapping("/{id}/active")
+  public ClientResponse reactivate(@PathVariable Long id) {
+    Client c = repository.findById(id).orElseThrow(() -> new NotFoundException("Client not found"));
+    c.setActive(true);
+    Client saved = repository.save(c);
+    return toResponse(saved);
+  }
+
   @PutMapping("/{id}")
   public ClientResponse update(@PathVariable Long id,
                                @Valid @RequestBody ClientUpdateRequest request) {

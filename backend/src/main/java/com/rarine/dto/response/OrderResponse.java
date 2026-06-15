@@ -14,6 +14,7 @@ public record OrderResponse(
     LocalDate deadline,
     String notes,
     String price,
+    Long imageAttachmentId,
     List<OrderItemResponse> items,
     List<OrderAttachmentResponse> attachments,
     OffsetDateTime createdAt,
