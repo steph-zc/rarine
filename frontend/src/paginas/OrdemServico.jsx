@@ -12,8 +12,16 @@ const STATUS_CLASS  = { PEDIDO: 'badge-open', PRODUCAO: 'badge-progress', PRONTO
 
 // Gola / Tecido com iniciais maiúsculas
 const GOLAS   = [{ val: 'redonda', label: 'Redonda' }, { val: 'polo', label: 'Polo' }, { val: 'V', label: 'V' }, { val: 'canoa', label: 'Canoa' }]
-const TECIDOS = [{ val: 'algodão', label: 'Algodão' }, { val: 'dry', label: 'Dry' }, { val: 'cross', label: 'Cross' }, { val: 'PV', label: 'PV' }]
+const TECIDOS = [{ val: 'algodão', label: 'Algodão' }, { val: 'dry', label: 'Dry' }, { val: 'cross', label: 'Cross' }, { val: 'PV', label: 'PV' }, { val: 'nylon leve', label: 'Nylon Leve' }, { val: 'nylon pesado', label: 'Nylon Pesado' }]
 const MANGAS  = [{ val: 'manga curta', label: 'Manga curta' }, { val: 'manga longa', label: 'Manga longa' }, { val: 'raglan', label: 'Raglan' }, { val: 'cavada', label: 'Cavada' }]
+
+// Detecta se o anexo é uma imagem (pelo tipo MIME ou extensão do arquivo)
+const ehImagem = (a) => {
+  const tipo = (a.fileType || a.tipo || '').toLowerCase()
+  if (tipo.startsWith('image')) return true
+  const nome = (a.filePath || a.caminho || '').toLowerCase()
+  return /\.(jpg|jpeg|png|gif|bmp|webp)$/.test(nome)
+}
 
 function OrdemServico() {
   const { id } = useParams()
@@ -99,13 +107,20 @@ function OrdemServico() {
     finally { setSalvando(false) }
   }
 
+  const definirImagemFicha = async (attId) => {
+    try {
+      const updated = await api.ordens.definirImagemFicha(id, attId)
+      setOrdem(updated)
+    } catch (e) { alert('Erro: ' + e.message) }
+  }
+
   const anexar = async () => {
     if (!anexoFile) return alert('Selecione um arquivo')
     setSalvando(true)
     try {
       const fd = new FormData()
       fd.append('file', anexoFile)
-      if (descAnexo) fd.append('descricao', descAnexo)
+      if (descAnexo) fd.append('description', descAnexo)
       await api.ordens.anexar(id, fd)
       setAnexoFile(null)
       setDescAnexo('')
@@ -166,6 +181,7 @@ function OrdemServico() {
 
               {!editandoInfo ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <InfoRow label="Pedido"       value={`Nº ${String(ordem.id).padStart(3, '0')}`} />
                   <InfoRow label="Cliente"      value={ordem.clientName || ordem.clienteNome} />
                   <InfoRow label="Status"       value={
                     <span className={`badge-status ${STATUS_CLASS[statusKey] || 'badge-open'}`}>
@@ -315,16 +331,58 @@ function OrdemServico() {
               </button>
 
               {ordem.attachments?.length > 0 && (
-                <div style={{ marginTop: 14 }}>
-                  <p className="anexos-titulo">Anexados:</p>
-                  {ordem.attachments.map(a => (
-                    <div key={a.id} className="anexo-linha">
-                      📎 {(a.caminho || a.filePath || '').split(/[/\\]/).pop()}
-                      {(a.descricao || a.description) && (
-                        <span className="anexo-desc"> — {a.descricao || a.description}</span>
-                      )}
-                    </div>
-                  ))}
+                <div style={{ marginTop: 16 }}>
+                  <p className="anexos-titulo" style={{ marginBottom: 2 }}>Arquivos anexados</p>
+                  <p style={{ fontSize: 11, color: 'var(--cinza-texto)', margin: '0 0 10px' }}>
+                    Marque uma imagem para usá-la na ficha técnica.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {ordem.attachments.map(a => {
+                      const nome = (a.caminho || a.filePath || '').split(/[/\\]/).pop()
+                      const img = ehImagem(a)
+                      const selecionada = a.id === ordem.imageAttachmentId
+                      return (
+                        <div
+                          key={a.id}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '8px 10px', borderRadius: 8,
+                            border: selecionada ? '1px solid #10b981' : '1px solid var(--cinza-borda)',
+                            background: selecionada ? 'rgba(16, 185, 129, 0.12)' : 'var(--branco)',
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="ficha-imagem"
+                            checked={selecionada}
+                            disabled={!img}
+                            onChange={() => definirImagemFicha(a.id)}
+                            title={img ? 'Usar esta imagem na ficha técnica' : 'Apenas imagens podem ser usadas na ficha'}
+                            style={{ accentColor: 'var(--azul)', width: 16, height: 16, flexShrink: 0, cursor: img ? 'pointer' : 'not-allowed' }}
+                          />
+                          <span
+                            style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
+                            onClick={() => window.open(api.ordens.fileUrl(id, a.id), '_blank')}
+                            title="Clique para abrir"
+                          >
+                            <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--texto)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {img ? '🖼️' : '📎'} {nome}
+                            </span>
+                            {(a.descricao || a.description) && (
+                              <span style={{ display: 'block', fontSize: 12, color: 'var(--texto-secundario)', fontWeight: 500 }}>
+                                {a.descricao || a.description}
+                              </span>
+                            )}
+                          </span>
+                          {selecionada && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                              ✓ Na ficha
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>

@@ -43,9 +43,13 @@ public class Order {
     @Column(name = "notes")
     private String notes;
 
-    // Preço lançado por pedido (texto livre, consultável no perfil do cliente)
+    // Preço lançado por pedido (texto livre, mantido para compatibilidade)
     @Column(name = "price", length = 100)
     private String price;
+
+    // Anexo selecionado como imagem principal da ficha técnica
+    @Column(name = "image_attachment_id")
+    private Long imageAttachmentId;
 
     // Set em vez de List — evita MultipleBagFetchException
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -71,6 +75,8 @@ public class Order {
     public void setNotes(String notes) { this.notes = notes; }
     public String getPrice() { return price; }
     public void setPrice(String price) { this.price = price; }
+    public Long getImageAttachmentId() { return imageAttachmentId; }
+    public void setImageAttachmentId(Long imageAttachmentId) { this.imageAttachmentId = imageAttachmentId; }
     public Set<OrderItem> getItems() { return items; }
     public Set<OrderAttachment> getAttachments() { return attachments; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

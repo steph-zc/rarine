@@ -11,5 +11,6 @@ public record OrderItemResponse(
     String manga,
     String fabric,
     boolean hasPrint,
+    String price,
     List<ItemEmbroideryResponse> embroideries
 ) {}

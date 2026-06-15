@@ -2,7 +2,8 @@
 export const PRINT_LOCAIS = [
   { val: 'FRONT_LARGE',  label: 'Frente grande' },
   { val: 'FRONT_SMALL',  label: 'Frente pequena' },
-  { val: 'BACK',         label: 'Costa' },
+  { val: 'BACK_LARGE',   label: 'Costas grande' },
+  { val: 'BACK_SMALL',   label: 'Costas pequena' },
   { val: 'SLEEVE_RIGHT', label: 'Manga direita' },
   { val: 'SLEEVE_LEFT',  label: 'Manga esquerda' },
 ]
@@ -14,19 +15,19 @@ export function labelEstampa(val) {
   return MAPA[val] || val
 }
 
-/** Junta uma lista de locais de estampa em texto: "Frente grande, Costa". */
+/** Junta uma lista de locais de estampa em texto: "Frente grande, Costas grande". */
 export function listaEstampa(locais) {
   if (!locais || locais.length === 0) return ''
   return locais.map(labelEstampa).join(', ')
 }
 
-/** Mapeia um local de aplicação do produto (frente/costas/manga + tamanho) para o local de estampa do item. */
+/** Mapeia um local de aplicação do produto (frente/costas/manga + tamanho/lado) para o local de estampa do item. */
 function mapearLocalProduto(l) {
   const loc = (l.location || '').toLowerCase()
   const size = (l.size || '').toLowerCase()
   if (loc === 'frente') return size === 'pequeno' ? 'FRONT_SMALL' : 'FRONT_LARGE'
-  if (loc === 'costas' || loc === 'costa') return 'BACK'
-  if (loc === 'manga') return 'SLEEVE_RIGHT'
+  if (loc === 'costas' || loc === 'costa') return size === 'pequeno' ? 'BACK_SMALL' : 'BACK_LARGE'
+  if (loc === 'manga') return size === 'esquerda' ? 'SLEEVE_LEFT' : 'SLEEVE_RIGHT'
   return null
 }
 

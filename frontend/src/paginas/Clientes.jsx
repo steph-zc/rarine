@@ -12,7 +12,8 @@ function Clientes() {
   const [pedidosCarregando, setPedidosCarregando] = useState(true)
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState(null)
-  const [detalhe, setDetalhe] = useState(null) // cliente selecionado para a janela
+  const [detalhe, setDetalhe] = useState(null)
+  const [busca, setBusca] = useState('')
 
   useEffect(() => {
     api.clientes.listar()
@@ -40,14 +41,39 @@ function Clientes() {
     }
   }
 
+  const handleReativar = async (id) => {
+    if (!window.confirm('Deseja reativar este cliente?')) return
+    try {
+      await api.clientes.reativar(id)
+      setClientes(prev => prev.map(c => c.id === id ? { ...c, active: true } : c))
+    } catch (e) {
+      alert('Erro ao reativar: ' + e.message)
+    }
+  }
+
+  const clientesFiltrados = busca.trim()
+    ? clientes.filter(c => (c.name || '').toLowerCase().includes(busca.toLowerCase()))
+    : clientes
+
   return (
     <div>
       <Header />
-      <div className="action-bar">
+      <div className="action-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
         <button className="action-bar-btn" onClick={() => navigate('/cadastrar-clientes')}>
           <i className="bi bi-person-plus"></i>
           Novo Cliente
         </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <i className="bi bi-search" style={{ color: '#6b7280', fontSize: 14 }}></i>
+          <input
+            type="text"
+            className="r-input"
+            style={{ width: 220, padding: '6px 10px', fontSize: 13 }}
+            placeholder="Buscar por nome..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="page-content">
@@ -68,7 +94,7 @@ function Clientes() {
                 </tr>
               </thead>
               <tbody>
-                {clientes.map(c => (
+                {clientesFiltrados.map(c => (
                   <tr key={c.id}>
                     <td style={{ color: '#6b7280', fontSize: 12 }}>#{c.id}</td>
                     <td style={{ fontWeight: 600 }}>{c.name}</td>
@@ -96,12 +122,23 @@ function Clientes() {
                           Inativar
                         </button>
                       )}
+                      {!c.active && (
+                        <button
+                          className="btn-tabela"
+                          style={{ background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7' }}
+                          onClick={() => handleReativar(c.id)}
+                        >
+                          Reativar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
-                {clientes.length === 0 && (
+                {clientesFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="table-empty">Nenhum cliente cadastrado</td>
+                    <td colSpan={7} className="table-empty">
+                      {busca ? 'Nenhum cliente encontrado para essa busca' : 'Nenhum cliente cadastrado'}
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -117,7 +154,10 @@ function Clientes() {
           carregando={pedidosCarregando}
           onClose={() => setDetalhe(null)}
           onAbrirPedido={(pedidoId) => { setDetalhe(null); navigate(`/ordem-servico/${pedidoId}`) }}
-          onPrecoSalvo={(pedidoId, preco) => setPedidos(prev => prev.map(o => o.id === pedidoId ? { ...o, price: preco } : o))}
+          onItemPrecoSalvo={(pedidoId, itemId, preco) => setPedidos(prev => prev.map(o => o.id === pedidoId
+            ? { ...o, items: (o.items || []).map(it => it.id === itemId ? { ...it, price: preco } : it) }
+            : o
+          ))}
         />
       )}
     </div>

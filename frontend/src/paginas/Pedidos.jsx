@@ -38,7 +38,7 @@ function prazoSugerido() {
 }
 
 const GOLAS   = [{ val: 'redonda', label: 'Redonda' }, { val: 'polo', label: 'Polo' }, { val: 'V', label: 'V' }, { val: 'canoa', label: 'Canoa' }]
-const TECIDOS = [{ val: 'algodão', label: 'Algodão' }, { val: 'dry', label: 'Dry' }, { val: 'cross', label: 'Cross' }, { val: 'PV', label: 'PV' }]
+const TECIDOS = [{ val: 'algodão', label: 'Algodão' }, { val: 'dry', label: 'Dry' }, { val: 'cross', label: 'Cross' }, { val: 'PV', label: 'PV' }, { val: 'nylon leve', label: 'Nylon Leve' }, { val: 'nylon pesado', label: 'Nylon Pesado' }]
 const MANGAS  = [{ val: 'manga curta', label: 'Manga curta' }, { val: 'manga longa', label: 'Manga longa' }, { val: 'raglan', label: 'Raglan' }, { val: 'cavada', label: 'Cavada' }]
 
 const itemInicial = { productId: '', color: '', collar: '', manga: '', fabric: '', hasPrint: false, estampas: [] }
@@ -160,7 +160,7 @@ function Pedidos() {
     try {
       const fd = new FormData()
       fd.append('file', anexoFile)
-      if (descAnexo) fd.append('descricao', descAnexo)
+      if (descAnexo) fd.append('description', descAnexo)
       await api.ordens.anexar(ordemAtual.id, fd)
       setAnexoFile(null)
       setDescAnexo('')

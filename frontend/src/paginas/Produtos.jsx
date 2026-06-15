@@ -16,10 +16,12 @@ const GOLAS = [
   { val: 'canoa',   label: 'Canoa' },
 ]
 const TECIDOS = [
-  { val: 'algodão', label: 'Algodão' },
-  { val: 'dry',     label: 'Dry' },
-  { val: 'cross',   label: 'Cross' },
-  { val: 'PV',      label: 'PV' },
+  { val: 'algodão',       label: 'Algodão' },
+  { val: 'dry',           label: 'Dry' },
+  { val: 'cross',         label: 'Cross' },
+  { val: 'PV',            label: 'PV' },
+  { val: 'nylon leve',    label: 'Nylon Leve' },
+  { val: 'nylon pesado',  label: 'Nylon Pesado' },
 ]
 const TIPOS = [
   { val: 'camiseta', label: 'Camiseta' },
@@ -30,11 +32,12 @@ const TIPOS = [
 
 // Locais de aplicação de bordado/estampa (PRODUTO_LOCAL_APLICACAO)
 const LOCAIS_APLICACAO = [
-  { location: 'frente', size: 'pequeno', label: 'Frente pequeno' },
-  { location: 'frente', size: 'grande',  label: 'Frente grande' },
-  { location: 'costas', size: 'pequeno', label: 'Costas pequeno' },
-  { location: 'costas', size: 'grande',  label: 'Costas grande' },
-  { location: 'manga',  size: null,      label: 'Manga' },
+  { location: 'frente', size: 'pequeno',  label: 'Frente pequena' },
+  { location: 'frente', size: 'grande',   label: 'Frente grande' },
+  { location: 'costas', size: 'pequeno',  label: 'Costas pequena' },
+  { location: 'costas', size: 'grande',   label: 'Costas grande' },
+  { location: 'manga',  size: 'direita',  label: 'Manga Direita' },
+  { location: 'manga',  size: 'esquerda', label: 'Manga Esquerda' },
 ]
 const chaveLocal = (l) => `${l.location}-${l.size || ''}`
 const rotuloLocal = (l) => {
@@ -98,6 +101,14 @@ function Produtos() {
   }
 
   const fecharModal = () => { setModal(null); setEditando(null) }
+
+  const handleExcluir = async (p) => {
+    if (!window.confirm(`Excluir o produto "${p.name}"? Pedidos existentes não serão afetados.`)) return
+    try {
+      await api.produtos.excluir(p.id)
+      setProdutos(prev => prev.filter(x => x.id !== p.id))
+    } catch (e) { alert('Erro ao excluir: ' + e.message) }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -281,9 +292,14 @@ function Produtos() {
                       )}
                     </td>
                     <td>
-                      <button className="btn-tabela btn-editar" onClick={() => abrirEditar(p)}>
-                        Editar
-                      </button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn-tabela btn-editar" onClick={() => abrirEditar(p)}>
+                          Editar
+                        </button>
+                        <button className="btn-tabela btn-inativar" onClick={() => handleExcluir(p)}>
+                          Excluir
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

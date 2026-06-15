@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -104,6 +106,9 @@ public class OrderController {
                                      @RequestParam(required = false) String price) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+        if (order.getStatus() == com.rarine.domain.enums.OrderStatus.ENTREGUE) {
+            throw new IllegalStateException("Não é possível alterar o preço de um pedido já entregue.");
+        }
         order.setPrice(price == null || price.isBlank() ? null : price.trim());
         orderRepository.save(order);
         return fetchAndMap(id);
@@ -191,6 +196,69 @@ public class OrderController {
                 .body(pdf);
     }
 
+    // ── Servir Arquivo Anexado ────────────────────────────────────────────────
+
+    @GetMapping("/{orderId}/attachments/{attId}/file")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<byte[]> serveFile(@PathVariable Long orderId, @PathVariable Long attId) {
+        Order order = orderRepository.findByIdWithAttachments(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        OrderAttachment att = order.getAttachments().stream()
+                .filter(a -> attId.equals(a.getId()))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Attachment not found"));
+
+        java.nio.file.Path uploadRoot = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+        java.nio.file.Path filePath = Paths.get(att.getFilePath()).toAbsolutePath().normalize();
+        if (!filePath.startsWith(uploadRoot)) {
+            throw new NotFoundException("Attachment not found");
+        }
+
+        try {
+            byte[] bytes = Files.readAllBytes(filePath);
+            String contentType = att.getFileType() != null ? att.getFileType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            String filename = filePath.getFileName().toString();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .body(bytes);
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao ler arquivo: " + attId, e);
+        }
+    }
+
+    // ── Preço por item ────────────────────────────────────────────────────────
+
+    @PatchMapping("/{orderId}/items/{itemId}/price")
+    public OrderItemResponse updateItemPrice(@PathVariable Long orderId,
+                                             @PathVariable Long itemId,
+                                             @RequestParam(required = false) String price) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        if (order.getStatus() == com.rarine.domain.enums.OrderStatus.ENTREGUE) {
+            throw new IllegalStateException("Não é possível alterar o preço de um pedido já entregue.");
+        }
+        OrderItem item = orderItemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Item not found"));
+        if (!item.getOrder().getId().equals(orderId)) {
+            throw new NotFoundException("Item not found");
+        }
+        item.setPrice(price == null || price.isBlank() ? null : price.trim());
+        return toItemResponse(orderItemRepository.save(item));
+    }
+
+    // ── Imagem da Ficha Técnica ───────────────────────────────────────────────
+
+    @PatchMapping("/{id}/image-attachment")
+    public OrderResponse updateImageAttachment(@PathVariable Long id,
+                                               @RequestParam(required = false) Long attachmentId) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        order.setImageAttachmentId(attachmentId);
+        orderRepository.save(order);
+        return fetchAndMap(id);
+    }
+
     // ── Anexar Imagem ao Pedido ───────────────────────────────────────────────
 
     @PostMapping(value = "/{orderId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -232,9 +300,13 @@ public class OrderController {
         Order withAttachments = orderRepository.findByIdWithAttachments(id)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
+        // Ordena por id para manter a ordem estável entre requisições (evita
+        // reordenação visual dos itens ao recarregar o pedido — Set não tem ordem)
         List<OrderItemResponse> items = withItems.getItems().stream()
+                .sorted(Comparator.comparing(OrderItem::getId))
                 .map(this::toItemResponse).toList();
         List<OrderAttachmentResponse> atts = withAttachments.getAttachments().stream()
+                .sorted(Comparator.comparing(OrderAttachment::getId))
                 .map(this::toAttachmentResponse).toList();
 
         return new OrderResponse(
@@ -245,6 +317,7 @@ public class OrderController {
                 withItems.getDeadline(),
                 withItems.getNotes(),
                 withItems.getPrice(),
+                withItems.getImageAttachmentId(),
                 items,
                 atts,
                 withItems.getCreatedAt(),
@@ -255,27 +328,30 @@ public class OrderController {
 
     private OrderItemResponse toItemResponse(OrderItem i) {
         List<ItemEmbroideryResponse> embs = i.getEmbroideries().stream()
+                .sorted(Comparator.comparing(ItemEmbroidery::getId))
                 .map(this::toEmbroideryResponse).toList();
-        // Usa o snapshot do nome (RN02.01); cai para o nome ao vivo apenas em itens legados
-        String productName = i.getProductName() != null ? i.getProductName() : i.getProduct().getName();
+        String productName = i.getProductName() != null ? i.getProductName()
+                : (i.getProduct() != null ? i.getProduct().getName() : "");
         return new OrderItemResponse(
                 i.getId(),
-                i.getProduct().getId(),
+                i.getProduct() != null ? i.getProduct().getId() : null,
                 productName,
                 i.getColor(),
                 i.getCollar(),
                 i.getManga(),
                 i.getFabric(),
                 i.isHasPrint(),
+                i.getPrice(),
                 embs);
     }
 
     private ItemEmbroideryResponse toEmbroideryResponse(ItemEmbroidery e) {
         Set<EmbroideryColorResponse> colorResponses = e.getColors().stream()
+                .sorted(Comparator.comparing(EmbroideryColor::getId))
                 .map(c -> new EmbroideryColorResponse(
                         c.getId(), c.getName(), c.getThreadCode(),
                         c.getBrand(), c.getHexColor(), c.getCreatedAt(), c.getUpdatedAt()))
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         return new ItemEmbroideryResponse(
                 e.getId(), e.getLocation(), e.getDescription(), colorResponses);
     }
